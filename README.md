@@ -1,27 +1,64 @@
 # Financial Transactions Data Pipeline
 
-A personal data engineering project built to develop hands-on pipeline skills.
+A personal data engineering project built to develop hands-on PySpark and Databricks skills.
 
 ## What this project does
-Ingests a real financial transactions dataset from Kaggle, applies PySpark 
+
+Ingests a real credit card transactions dataset from Kaggle, applies PySpark 
 transformations to clean and aggregate the data, and validates data quality 
 at each stage — following a 3-layer Medallion architecture (Raw → Cleaned → Aggregated).
 
-## Architecture
-Raw CSV (Kaggle) → Databricks Table (Raw layer) → Cleaned Table (CDZ layer) → Aggregated Table (PDZ layer)
-
+## Architecture 
+Raw CSV (Kaggle)
+↓
+Raw Layer — Load into Databricks table, row count validation
+↓
+Cleaned Layer — Remove nulls, remove duplicates, data quality checks
+↓
+Aggregated Layer — Group by category, total amount per group
 ## Notebooks
-- 01_raw_ingestion — loads raw CSV data into Databricks, runs row count validation
-- 02_transformation — cleans data, removes nulls and duplicates, saves cleaned output, runs data quality checks
 
-## Tools used
+| File | Description |
+|------|-------------|
+| 01_raw_ingestion.py | Loads raw CSV into Databricks, validates row count |
+| 02_transformation.py | Cleans data, removes nulls & duplicates, runs quality checks, saves output |
+
+## Sample Code
+
+```python
+# Load raw data
+df = spark.table("transactions_raw")
+
+# Clean and transform
+df_clean = df.filter(df.amount > 0).dropDuplicates()
+
+# Data quality checks
+assert df_clean.count() > 0, "No data found!"
+assert df_clean.filter(df_clean.amount.isNull()).count() == 0, "Null amounts found!"
+
+# Validate row count didn't drop more than 50%
+assert df_clean.count() >= df.count() * 0.5, "Too many rows dropped!"
+
+# Save to cleaned layer
+df_clean.write.mode("overwrite").saveAsTable("transactions_cleaned")
+```
+
+## Tools Used
+
 - PySpark (Apache Spark)
 - Databricks Community Edition
-- SQL
+- Spark SQL
 - Python
+- GitHub
 
 ## Dataset
-Credit card transactions dataset from Kaggle (public domain)
+
+Credit card transactions dataset from Kaggle —
+https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud
 
 ## Author
-Srija Nuthi — Data Engineer at Accenture | Databricks Certified Data Engineer Associate
+
+**Srija Nuthi**  
+Data Engineer at Accenture | Databricks Certified Data Engineer Associate  
+[LinkedIn](https://www.linkedin.com/in/srija-nuthi-1091021b4) | [GitHub](https://github.com/srijanuthi)
+
